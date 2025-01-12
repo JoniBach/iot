@@ -22,10 +22,10 @@ def get_insights_raw(readings: List[Dict[str, Any]]) -> Dict[str, float]:
         raise ValueError("No sensor readings provided.")
 
     return {
-        "air_quality_index": calculate_air_quality_index(readings),  # Ω
+        "air_quality_index": calculate_air_quality_index(readings),  # Percentage (0–100)
         "thermal_comfort_index": calculate_thermal_comfort_index(readings),  # °C
         "mold_risk_index": calculate_mold_risk_index(readings),  # %
-        "building_stress_index": calculate_building_stress_index(readings),
+        "building_stress_index": calculate_building_stress_index(readings),  # Dimensionless composite score
         "pressure_variance": calculate_pressure_variance(readings),  # hPa
-        "voc_exposure_score": calculate_voc_exposure_score(readings)  # Ω
+        "voc_exposure_score": calculate_voc_exposure_score(readings)  # Dimensionless (logarithmic score)
     }
