@@ -3,6 +3,8 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 
+from get_insights_raw import get_insights_raw  # Import the insights function
+
 def load_env_variables() -> Dict[str, str]:
     """
     Load environment variables and return Supabase credentials.
@@ -34,7 +36,7 @@ def fetch_all_readings(supabase: Client, table_name: str) -> List[Dict[str, Any]
 
 def main():
     """
-    Main execution function that orchestrates the fetching of readings.
+    Main execution function that orchestrates the fetching of readings and logging insights.
     """
     # Load environment variables
     credentials = load_env_variables()
@@ -45,11 +47,16 @@ def main():
     # Fetch readings from the 'readings' table
     readings = fetch_all_readings(supabase, "readings")
 
-    # Print results
     if readings:
         print(f"Total readings fetched: {len(readings)}")
-        for reading in readings:
-            print(reading)
+
+        # Call get_insights_raw to calculate raw insights
+        insights = get_insights_raw(readings)
+
+        # Log the insights
+        print("Raw Insights:")
+        for key, value in insights.items():
+            print(f"{key}: {value}")
     else:
         print("No data found or an error occurred.")
 
