@@ -1,4 +1,6 @@
 import os
+import sys
+from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from typing import List, Dict, Any
@@ -24,11 +26,20 @@ def initialize_supabase(url: str, key: str) -> Client:
     return create_client(url, key)
 
 
-def fetch_all_readings(supabase: Client, table_name: str) -> List[Dict[str, Any]]:
+def fetch_readings_within_range(supabase: Client, table_name: str, from_date: str, to_date: str) -> List[Dict[str, Any]]:
     """
-    Fetch all rows from the specified table using the Supabase client.
+    Fetch rows from the specified table within a given datetime range using the Supabase client.
+
+    Args:
+        supabase (Client): Supabase client instance.
+        table_name (str): Name of the table to query.
+        from_date (str): Start of the datetime range (inclusive).
+        to_date (str): End of the datetime range (inclusive).
+
+    Returns:
+        List[Dict[str, Any]]: List of readings within the specified range.
     """
-    response = supabase.table(table_name).select("*").execute()
+    response = supabase.table(table_name).select("*").gte("created_at", from_date).lte("created_at", to_date).execute()
 
     # Return data if available, otherwise return an empty list
     return response.data if response and response.data else []
@@ -62,14 +73,30 @@ def main():
     """
     Main execution function that orchestrates the fetching of readings, logging insights, and saving them.
     """
+    if len(sys.argv) != 3:
+        print("Usage: python app.py <from_date> <to_date>")
+        print("Example: python app.py 2025-01-01T00:00:00Z 2025-01-02T00:00:00Z")
+        sys.exit(1)
+
+    from_date = sys.argv[1]
+    to_date = sys.argv[2]
+
+    # Validate datetime format
+    try:
+        datetime.fromisoformat(from_date.replace("Z", "+00:00"))
+        datetime.fromisoformat(to_date.replace("Z", "+00:00"))
+    except ValueError:
+        print("Invalid datetime format. Use ISO 8601 format (e.g., 2025-01-01T00:00:00Z).")
+        sys.exit(1)
+
     # Load environment variables
     credentials = load_env_variables()
 
     # Initialize Supabase client
     supabase = initialize_supabase(credentials["url"], credentials["key"])
 
-    # Fetch readings from the 'readings' table
-    readings = fetch_all_readings(supabase, "readings")
+    # Fetch readings within the specified range
+    readings = fetch_readings_within_range(supabase, "readings", from_date, to_date)
 
     if readings:
         print(f"Total readings fetched: {len(readings)}")
